@@ -52,11 +52,28 @@ export function PDFView() {
   useEffect(() => {
     if (canvasRef.current !== null && image == null) {
       const canvas = canvasRef.current;
-      let newImage = new Image();
+      console.log(canvas.style.width);
+      const newImage = new Image();
       newImage.src = canvas.toDataURL();
-      console.log("Got new image");
-      setImage(newImage);
-      setImgSrc(newImage.src);
+
+      newImage.onload = function(e) {
+        const newCanvas = document.createElement("canvas");
+        const ctx = newCanvas.getContext("2d");
+  
+        // Set width and height
+        newCanvas.width = Number(canvas.style.width.slice(0, -2));
+        newCanvas.height = Number(canvas.style.height.slice(0, -2));
+        // Draw image and export to a data-uri
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(newImage, 0, 0, newCanvas.width, newCanvas.height);
+  
+        const resizedImage = new Image();
+        resizedImage.src = newCanvas.toDataURL();
+  
+        console.log("Got new image");
+        setImage(resizedImage);
+        setImgSrc(resizedImage.src);
+      }
     }
   })
 
@@ -91,6 +108,10 @@ export function PDFView() {
     setOutput(base64Image);
   };
 
+  const getCoordinates = (crop) => {
+    console.log(crop);
+  }
+
   return (
 
 
@@ -101,11 +122,12 @@ export function PDFView() {
           <Grid item xs={7}>
             <div className="container-document">
               
-            <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} inputRef={inputRef}>
-              <ReactCrop src={imgSrc} onImageLoaded={setImage} crop={crop} onChange={setCrop}>
-                <Page canvasRef={canvasRef} key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false} />
-              </ReactCrop>
-            </Document>
+              <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} inputRef={inputRef}>
+                <ReactCrop src={imgSrc} onImageLoaded={setImage} crop={crop} onChange={setCrop} style={{boxShadow:'0 0 8px rgba(0, 0, 0, 0.5)'}}
+                  onDragEnd={cropImageNow} onComplete={getCoordinates}>
+                  <Page canvasRef={canvasRef} key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false} />
+                </ReactCrop>
+              </Document>
             
             </div>
           </Grid>
@@ -134,15 +156,6 @@ export function PDFView() {
               {selectedFile.size} bytes
               </Typography>
             </Box>
-
-            {image? 
-              <Button variant='contained' onClick={cropImageNow}
-              sx={{
-                marginBottom: '30px',
-              }}>
-                Crop
-              </Button>
-            :''}
 
             {output?
               <Box sx={{
