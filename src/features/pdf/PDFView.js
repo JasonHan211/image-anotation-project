@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/TextLayer.css'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
-import './PDFView.css';
+import './PDFView.css';import { useSelector, useDispatch } from 'react-redux';
+import {
+  // addFile, 
+  // removeFile,
+  selectFiles,
+} from './filesSlice';
+import { Box, Container } from '@mui/system';
+import { Grid, Typography } from '@mui/material';
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const options = {
@@ -12,12 +19,17 @@ const options = {
 };
 
 export function PDFView() {
+  const filesArray = useSelector(selectFiles);
+  // const dispatch = useDispatch();
   const [file, setFile] = useState('');
-  const [numPages, setNumPages] = useState(null);
+  const [numPages, setNumPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
 
-  function onFileChange(event) {
-    console.log(event.target.files[0])
-    setFile(event.target.files[0]);
+  const selectedFile = filesArray[0];
+
+  if (file === '') {   
+    console.log('Loading PDF: ',selectedFile);
+    setFile(selectedFile)
   }
 
   function onDocumentLoadSuccess({ numPages: nextNumPages }) {
@@ -25,23 +37,46 @@ export function PDFView() {
   }
 
   return (
-    <div className="Example">
-      <header>
-        <h1>react-pdf sample page</h1>
-      </header>
-      <div className="Example__container">
-        <div className="Example__container__load">
-          <label htmlFor="file">Load from file:</label>{' '}
-          <input onChange={onFileChange} type="file" />
-        </div>
-        <div className="Example__container__document">
-          <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} >
-            {Array.from(new Array(numPages), (el, index) => (
-              <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false} />
-            ))}
-          </Document>
-        </div>
-      </div>
-    </div>
+
+        <Grid container spacing={3} 
+        sx={{
+          marginTop:'30px',
+        }}>
+          <Grid xs={7}>
+            <div className="container-document">
+            <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} >
+              <Page key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false} />
+            </Document>
+            </div>
+          </Grid>
+          <Grid xs={5}>
+            <Box sx={{
+              backgroundColor: 'text.main',
+              marginX: '70px',
+              marginBottom: '30px',
+              paddingY: '30px',
+              border: '3px solid grey',
+              borderRadius: '5px',
+            }}>
+              <Typography>
+                {selectedFile.name}
+              </Typography>
+            </Box>
+            <Box sx={{
+              backgroundColor: 'text.main',
+              marginX: '70px',
+              marginBottom: '30px',
+              paddingY: '30px',
+              border: '3px solid grey',
+              borderRadius: '5px',
+            }}>
+              <Typography>
+              {selectedFile.size} bytes
+              </Typography>
+            </Box>
+
+          </Grid>
+        </Grid>
+
   );
 }
