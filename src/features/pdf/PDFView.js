@@ -52,35 +52,18 @@ export function PDFView() {
   useEffect(() => {
     if (canvasRef.current !== null && image == null) {
       const canvas = canvasRef.current;
-      console.log(canvas.style.width);
       const newImage = new Image();
       newImage.src = canvas.toDataURL();
-
-      newImage.onload = function(e) {
-        const newCanvas = document.createElement("canvas");
-        const ctx = newCanvas.getContext("2d");
-  
-        // Set width and height
-        newCanvas.width = Number(canvas.style.width.slice(0, -2));
-        newCanvas.height = Number(canvas.style.height.slice(0, -2));
-        // Draw image and export to a data-uri
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(newImage, 0, 0, newCanvas.width, newCanvas.height);
-  
-        const resizedImage = new Image();
-        resizedImage.src = newCanvas.toDataURL();
-  
-        console.log("Got new image");
-        setImage(resizedImage);
-        setImgSrc(resizedImage.src);
-      }
+      console.log("Got new image");
+      setImage(newImage);
+      setImgSrc(newImage.src);
     }
   })
 
   const cropImageNow = () => {
     const canvas = document.createElement('canvas');
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    const scaleX = image.naturalWidth / Number(canvasRef.current.style.width.slice(0, -2));
+    const scaleY = image.naturalHeight / Number(canvasRef.current.style.height.slice(0, -2));
     canvas.width = crop.width;
     canvas.height = crop.height;
     const ctx = canvas.getContext('2d');
