@@ -1,18 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-export const filesSlice = createSlice({
-    name: 'files',
+export const savesSlice = createSlice({
+    name: 'saves',
     initialState: [],
     // The `reducers` field lets us define reducers and generate associated actions
     reducers: {
       // Use the PayloadAction type to declare the contents of `action.payload`
-      addFile: (state, action) => {
+      addSave: (state, action) => {
         const file = action.payload;
         state.push(file);
       },
-      removeFile: (state, action) => {
+      removeSave: (state, action) => {
         const fileName = action.payload;
-        const index = state.findIndex(obj => obj.name === fileName);
+        const index = state.findIndex(obj => obj.fileName === fileName);
         const newState = [
             ...state.slice(0, index),
             ...state.slice(index + 1)
@@ -22,6 +22,6 @@ export const filesSlice = createSlice({
     }
   });
 
-export const selectFiles = (state) => state.files;
-export const {addFile, removeFile} = filesSlice.actions;
-export default filesSlice.reducer;
+export const selectSaves = (state) => state.saves;
+export const {addSave, removeSave} = savesSlice.actions;
+export default savesSlice.reducer;

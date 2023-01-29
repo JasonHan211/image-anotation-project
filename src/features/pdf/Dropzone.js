@@ -1,9 +1,6 @@
 import React from 'react';
+import { addFile, selectFiles } from './filesSlice';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  addFile,
-  selectFiles,
-} from './filesSlice';
 import SendIcon from '@mui/icons-material/Send';
 import {useDropzone} from 'react-dropzone';
 import { Box } from '@mui/material';
@@ -15,7 +12,7 @@ export function Dropzone(props) {
   
   const filesArray = useSelector(selectFiles);
   const dispatch = useDispatch();
-  const {acceptedFiles, getRootProps, getInputProps} = useDropzone();
+  const {acceptedFiles, getRootProps, getInputProps} = useDropzone({maxFiles:1});
 
   const files = acceptedFiles.map(file => (
     <li key={file.path}>

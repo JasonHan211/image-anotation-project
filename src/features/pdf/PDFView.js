@@ -1,17 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/TextLayer.css'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
-import './PDFView.css';import { useSelector, useDispatch } from 'react-redux';
-import {
-  // addFile, 
-  // removeFile,
-  selectFiles,
-} from './filesSlice';
-import { Box } from '@mui/system';
-import { Grid, Pagination, Stack, Typography } from '@mui/material';
-import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import './PDFView.css';
+import React, { useEffect, useState, useRef } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectFiles } from './filesSlice';
+import { addSave } from './savesSlice';
+import { Box } from '@mui/system';
+import { Button, Grid, Pagination, Stack, Typography } from '@mui/material';
+import ReactCrop from 'react-image-crop';
 import { createWorker } from 'tesseract.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
@@ -24,17 +22,19 @@ const options = {
 
 export function PDFView() {
   const filesArray = useSelector(selectFiles);
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [file, setFile] = useState('');
   const [numPages, setNumPages] = useState(1);
   const [pageChanged, setPageChanged] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
 
+  const canvasRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [crop, setCrop] = useState();
   const [image, setImage] = useState(null);
   const [output, setOutput] = useState(null);
   const [outputChanged, setOutputChanged] = useState(false);
+
   const [coordinate, setCoordinate] = useState();
   
   const [ocr, setOcr] = useState('Recognizing...');
@@ -52,24 +52,6 @@ export function PDFView() {
   function onDocumentLoadSuccess({ numPages: nextNumPages }) {
     setNumPages(nextNumPages);
   }
-
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    if (canvasRef.current !== null && pageChanged == true) {
-      const canvas = canvasRef.current;
-      const newImage = new Image();
-      newImage.src = canvas.toDataURL();
-      console.log("Got new image");
-      setImage(newImage);
-      setImgSrc(newImage.src);
-      setPageChanged(false);
-    }
-    if (outputChanged) {
-      doOCR();
-      setOutputChanged(false);
-    }
-  })
 
   const cropImageNow = () => {
     const canvas = document.createElement('canvas');
@@ -123,6 +105,23 @@ export function PDFView() {
     console.log(text);
     setOcr(text);
   };
+
+  // eslint-disable-next-line
+  useEffect(() => {
+    if (canvasRef.current !== null && pageChanged === true) {
+      const canvas = canvasRef.current;
+      const newImage = new Image();
+      newImage.src = canvas.toDataURL();
+      console.log("Got new image");
+      setImage(newImage);
+      setImgSrc(newImage.src);
+      setPageChanged(false);
+    }
+    if (outputChanged) {
+      doOCR();
+      setOutputChanged(false);
+    }
+  })
 
   return (
 
@@ -213,8 +212,36 @@ export function PDFView() {
                   marginX: '70px',
                   marginBottom: '30px',
                 }}>
-                  <img className='crop-image' src={output} />
+                  <img className='crop-image' src={output} alt='Cropped' />
                 </Box>
+                <Button variant='contained'
+                onClick={() => {
+                  const object = {
+                    fileName: selectedFile.name,
+                    boundingBox: {
+                      topLeft: {
+                        x: coordinate.x,
+                        y: coordinate.y
+                      },
+                      topRight: {
+                        x: coordinate.x + coordinate.width,
+                        y: coordinate.y
+                      },
+                      bottomLeft: {
+                        x: coordinate.x,
+                        y: coordinate.y + coordinate.height
+                      },
+                      bottomRight: {
+                        x: coordinate.x + coordinate.width,
+                        y: coordinate.y + coordinate.height
+                      },
+                    },
+                    text: ocr,
+                  }
+                  dispatch(addSave(object));
+                }}>
+                  Save
+                </Button>
               </>   
             :''}
 
