@@ -19,6 +19,7 @@
     "react-pdf": "^6.2.2",
     "react-redux": "^8.0.5",
     "react-scripts": "^5.0.1",
+    "tesseract.js": "^4.0.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

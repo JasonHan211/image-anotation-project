@@ -8,12 +8,11 @@ import {
   // removeFile,
   selectFiles,
 } from './filesSlice';
-import { Box, Container } from '@mui/system';
-import { Button, Grid, Typography } from '@mui/material';
-import ReactCrop , { centerCrop, makeAspectCrop, Crop, PixelCrop} from 'react-image-crop';
+import { Box } from '@mui/system';
+import { Grid, Pagination, Stack, Typography } from '@mui/material';
+import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { canvasPreview } from './canvasPreview';
-import { useDebounceEffect } from './useDebounceEffect';
+import { createWorker } from 'tesseract.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -28,12 +27,18 @@ export function PDFView() {
   // const dispatch = useDispatch();
   const [file, setFile] = useState('');
   const [numPages, setNumPages] = useState(1);
+  const [pageChanged, setPageChanged] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
 
   const [imgSrc, setImgSrc] = useState(null);
   const [crop, setCrop] = useState();
   const [image, setImage] = useState(null);
   const [output, setOutput] = useState(null);
+  const [outputChanged, setOutputChanged] = useState(false);
+  const [coordinate, setCoordinate] = useState();
+  
+  const [ocr, setOcr] = useState('Recognizing...');
+
   const inputRef = useRef(null);
 
   const selectedFile = filesArray[0];
@@ -49,21 +54,27 @@ export function PDFView() {
   }
 
   const canvasRef = useRef(null);
+
   useEffect(() => {
-    if (canvasRef.current !== null && image == null) {
+    if (canvasRef.current !== null && pageChanged == true) {
       const canvas = canvasRef.current;
       const newImage = new Image();
       newImage.src = canvas.toDataURL();
       console.log("Got new image");
       setImage(newImage);
       setImgSrc(newImage.src);
+      setPageChanged(false);
+    }
+    if (outputChanged) {
+      doOCR();
+      setOutputChanged(false);
     }
   })
 
   const cropImageNow = () => {
     const canvas = document.createElement('canvas');
-    const scaleX = image.naturalWidth / Number(canvasRef.current.style.width.slice(0, -2));
-    const scaleY = image.naturalHeight / Number(canvasRef.current.style.height.slice(0, -2));
+    const scaleX = image.naturalWidth / canvasRef.current.clientWidth;
+    const scaleY = image.naturalHeight / canvasRef.current.clientHeight;
     canvas.width = crop.width;
     canvas.height = crop.height;
     const ctx = canvas.getContext('2d');
@@ -89,31 +100,60 @@ export function PDFView() {
     // Converting to base64
     const base64Image = canvas.toDataURL('image/jpeg');
     setOutput(base64Image);
+    setOutputChanged(true);
   };
 
   const getCoordinates = (crop) => {
-    console.log(crop);
+    setCoordinate(crop);
   }
 
-  return (
+  const pageChange = (e,page) => {
+    setPageNumber(page);
+    setPageChanged(true);
+  }
 
+  const doOCR = async () => {
+    const worker = await createWorker({
+      logger: m => console.log(m),
+    });
+    await worker.load();
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    const { data: { text } } = await worker.recognize(output);
+    console.log(text);
+    setOcr(text);
+  };
+
+  return (
 
         <Grid container spacing={3} 
         sx={{
           marginTop:'30px',
         }}>
+
           <Grid item xs={7}>
-            <div className="container-document">
-              
-              <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} inputRef={inputRef}>
-                <ReactCrop src={imgSrc} onImageLoaded={setImage} crop={crop} onChange={setCrop} style={{boxShadow:'0 0 8px rgba(0, 0, 0, 0.5)'}}
-                  onDragEnd={cropImageNow} onComplete={getCoordinates}>
-                  <Page canvasRef={canvasRef} key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false} />
-                </ReactCrop>
-              </Document>
-            
-            </div>
+            <Stack spacing={4}>
+              <div className="container-document">
+                <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options} inputRef={inputRef}>
+                  <ReactCrop src={imgSrc} onImageLoaded={setImage} crop={crop} onChange={setCrop} style={{boxShadow:'0 0 8px rgba(0, 0, 0, 0.5)'}}
+                    onDragEnd={cropImageNow} onComplete={getCoordinates}>
+                    <Page canvasRef={canvasRef} key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false}/>
+                  </ReactCrop>
+                </Document>
+              </div>
+              <Box>
+                <Pagination sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '30px',
+                }}
+                count={numPages} 
+                onChange={pageChange}/>
+              </Box>
+            </Stack>
           </Grid>
+
           <Grid item xs={5}>
             <Box sx={{
               backgroundColor: 'text.main',
@@ -123,7 +163,7 @@ export function PDFView() {
               border: '3px solid grey',
               borderRadius: '5px',
             }}>
-              <Typography>
+              <Typography noWrap>
                 {selectedFile.name}
               </Typography>
             </Box>
@@ -135,22 +175,50 @@ export function PDFView() {
               border: '3px solid grey',
               borderRadius: '5px',
             }}>
-              <Typography>
-              {selectedFile.size} bytes
+              <Typography noWrap>
+                {selectedFile.size} bytes
               </Typography>
             </Box>
 
             {output?
-              <Box sx={{
-                marginX: '70px',
-                marginBottom: '30px',
-              }}>
-                <img className='crop-image' src={output} />
-              </Box>
+              <>
+                <Box sx={{
+                  backgroundColor: 'text.main',
+                  marginX: '70px',
+                  marginBottom: '30px',
+                  paddingY: '30px',
+                  border: '3px solid grey',
+                  borderRadius: '5px',
+                }}>
+                  <Typography noWrap>
+                    Top-Left = x:{coordinate.x.toFixed(2)} y:{coordinate.y.toFixed(2)}<br></br>
+                    Top-Right = x:{(coordinate.x + coordinate.width).toFixed(2)} y:{coordinate.y.toFixed(2)}<br></br>
+                    Bottom-Left = x:{coordinate.x.toFixed(2)} y:{(coordinate.y + coordinate.height).toFixed(2)}<br></br>
+                    Bottom-Right = x:{(coordinate.x + coordinate.width).toFixed(2)} y:{(coordinate.y + coordinate.height).toFixed(2)}<br></br>
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  backgroundColor: 'text.main',
+                  marginX: '70px',
+                  marginBottom: '30px',
+                  paddingY: '30px',
+                  border: '3px solid grey',
+                  borderRadius: '5px',
+                }}>
+                  <Typography>
+                    {ocr}
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  marginX: '70px',
+                  marginBottom: '30px',
+                }}>
+                  <img className='crop-image' src={output} />
+                </Box>
+              </>   
             :''}
 
           </Grid>
-
         </Grid>
 
   );
