@@ -1,0 +1,14 @@
+Quiz: Can/Should a user draw a bounding box on pdf? Why or Why not?
+Ans: Yes a user can. But in this case of text extraction, drawing it on an image to later be crop would be ideal.
+
+Quiz: Should the Frontend or Backend handle the text extraction? Why?
+Ans: Whether text extraction from an image should be handled on the frontend or backend depends on the complexity of the task and the workload of each component. If the task is complex, it is recommended to handle it on the backend. If simple, it can be handled on the frontend.
+
+Quiz: If you refresh the page, the data (redux state) in the table is gone. Why?
+Ans: Its because the state stored in the store is not persisted.
+
+Quiz: What are the possible ways to handle it in the Frontend?
+Ans: Saving it to local storage or database.
+
+Quiz: Should we handle the filter and pagination in the Frontend or Backend? Why?
+Ans: For a large ammount of data, filter and pagination should be done on the backend as it reduces the amount of data needed to be transfered. But if the amount of data is small, it can be done on the frontend.
