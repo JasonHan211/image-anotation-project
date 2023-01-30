@@ -1,5 +1,5 @@
 import React from 'react';
-import { addFile, selectFiles } from './filesSlice';
+import { addFile, selectFiles } from '../filesSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import SendIcon from '@mui/icons-material/Send';
 import {useDropzone} from 'react-dropzone';
@@ -7,6 +7,7 @@ import { Box } from '@mui/material';
 import { Button } from '@mui/material';
 import { Typography } from '@mui/material';
 import { Container } from '@mui/material';
+import { setPage } from '../../../app/pages';
 
 export function Dropzone(props) {
   
@@ -61,8 +62,9 @@ export function Dropzone(props) {
                 if (index === -1) {
                   console.log("Uploaded PDF:", file);
                   dispatch(addFile(file));
+                  dispatch(setPage('view'));
                 } else {
-                  console.log("File already exist")
+                  console.log("File already exist");
                 }
               })
             }

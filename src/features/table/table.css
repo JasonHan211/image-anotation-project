@@ -1,0 +1,33 @@
+table, th, td {
+    border: 1px solid;
+    padding: 20px;
+    margin: 20px;
+}
+
+label,
+input {
+  color: #293241;
+}
+
+label {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+}
+
+input {
+  border: 2px solid rgba(#1d3557, 0.8);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  padding-left: 1rem;
+  font-size: 1rem;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+form {
+    width: 500px;
+}

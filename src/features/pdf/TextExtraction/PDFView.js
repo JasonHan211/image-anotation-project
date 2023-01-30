@@ -5,12 +5,13 @@ import './PDFView.css';
 import React, { useEffect, useState, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectFiles } from './filesSlice';
-import { addSave } from './savesSlice';
+import { removeFile, selectFiles } from '../filesSlice';
+import { addSave, selectSaveID } from '../../table/savesSlice';
 import { Box } from '@mui/system';
 import { Button, Grid, Pagination, Stack, Typography } from '@mui/material';
 import ReactCrop from 'react-image-crop';
 import { createWorker } from 'tesseract.js';
+import { setPage } from '../../../app/pages';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -22,6 +23,7 @@ const options = {
 
 export function PDFView() {
   const filesArray = useSelector(selectFiles);
+  const saveID = useSelector(selectSaveID);
   const dispatch = useDispatch();
   const [file, setFile] = useState('');
   const [numPages, setNumPages] = useState(1);
@@ -96,7 +98,7 @@ export function PDFView() {
 
   const doOCR = async () => {
     const worker = await createWorker({
-      logger: m => console.log(m),
+      logger: m => console.log(m.progress),
     });
     await worker.load();
     await worker.loadLanguage('eng');
@@ -215,30 +217,33 @@ export function PDFView() {
                   <img className='crop-image' src={output} alt='Cropped' />
                 </Box>
                 <Button variant='contained'
-                onClick={() => {
-                  const object = {
-                    fileName: selectedFile.name,
-                    boundingBox: {
-                      topLeft: {
-                        x: coordinate.x,
-                        y: coordinate.y
+                  onClick={() => {
+                    const object = {
+                      id: saveID,
+                      fileName: selectedFile.name,
+                      boundingBox: {
+                        topLeft: {
+                          x: coordinate.x,
+                          y: coordinate.y
+                        },
+                        topRight: {
+                          x: coordinate.x + coordinate.width,
+                          y: coordinate.y
+                        },
+                        bottomLeft: {
+                          x: coordinate.x,
+                          y: coordinate.y + coordinate.height
+                        },
+                        bottomRight: {
+                          x: coordinate.x + coordinate.width,
+                          y: coordinate.y + coordinate.height
+                        },
                       },
-                      topRight: {
-                        x: coordinate.x + coordinate.width,
-                        y: coordinate.y
-                      },
-                      bottomLeft: {
-                        x: coordinate.x,
-                        y: coordinate.y + coordinate.height
-                      },
-                      bottomRight: {
-                        x: coordinate.x + coordinate.width,
-                        y: coordinate.y + coordinate.height
-                      },
-                    },
-                    text: ocr,
-                  }
-                  dispatch(addSave(object));
+                      text: ocr,
+                    }
+                    dispatch(addSave(object));
+                    dispatch(setPage('table'));
+                    dispatch(removeFile());
                 }}>
                   Save
                 </Button>
