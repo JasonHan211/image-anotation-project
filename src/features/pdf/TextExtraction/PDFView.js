@@ -106,6 +106,7 @@ export function PDFView() {
     const { data: { text } } = await worker.recognize(output);
     console.log(text);
     setOcr(text);
+    await worker.terminate();
   };
 
   // eslint-disable-next-line

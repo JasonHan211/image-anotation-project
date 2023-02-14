@@ -20,13 +20,7 @@ const columnHelper = createColumnHelper();
 const editSchema = Yup.object().shape({
     name: Yup.string()
         .required("Name is required")
-        .min(7, "Mininum 7 character (including .pdf)")
-        .max(14, "Maximum 14 character (including .pdf)")
-        .test(
-            'end-with-pdf',
-            '${path} does not end with .pdf',
-            (value, context) => value.endsWith('.pdf'),
-        ),
+        .matches(/^[a-zA-Z]{3,10}.pdf$/i , 'Is not in correct format'),
     text: Yup.string()
         .required("Password is required")
   });
@@ -46,7 +40,7 @@ function Table(props) {
 
     useEffect(() => { 
         setData(savesArray);
-    })
+    },[savesArray])
 
     const rerender = React.useReducer(() => ({}), {})[1];
     const columns = [
