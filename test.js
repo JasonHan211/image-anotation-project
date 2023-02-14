@@ -25,5 +25,21 @@ obj2.c.f = 10;
 console.log(obj);
 console.log(obj2);
 
+// Answer
+function deepCopy(obj) {
+    let newObj = {};
+  
+    for (let key in obj) {
+      let value = obj[key];
+      if (typeof value === 'object') {
+        newObj[key] = deepCopy(value);
+      } else {
+        newObj[key] = value;
+      }
+    }
+  
+    return newObj;
+}
+
 //  lalit@thewalnut.ai
 //  humza@thewalnut.ai
